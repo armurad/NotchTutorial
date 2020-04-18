@@ -20,7 +20,7 @@
     <TextView
         android:layout_below="@id/device_list"
         android:id="@+id/current_network"
-        android:text="Current network:"
+        android:text="Current netWERK:"
         android:textColor="@color/blue"
         android:textSize="16dp"
         android:gravity="left"
