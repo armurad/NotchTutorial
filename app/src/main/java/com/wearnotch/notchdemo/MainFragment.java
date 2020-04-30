@@ -294,7 +294,14 @@ public class MainFragment extends BaseFragment {
         // Other
         mSDF = new SimpleDateFormat("yyyyMMdd_HHmmss");
 
-        buildUserDialog();
+        //buildUserDialog();
+
+        String user = getResources().getString(R.string.notch_id);
+        mNotchService.setLicense(user);
+        updateUser(mNotchService.getLicense());
+        mUser = user;
+
+
         buildChannelDialog();
         try {
             checkAndCopyExample();
