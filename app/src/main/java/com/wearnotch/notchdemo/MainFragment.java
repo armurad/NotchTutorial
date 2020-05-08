@@ -50,6 +50,7 @@ import com.wearnotch.service.common.NotchCallback;
 import com.wearnotch.service.common.NotchError;
 import com.wearnotch.service.common.NotchProgress;
 import com.wearnotch.framework.visualiser.VisualiserData;
+import com.wearnotch.service.network.NotchService;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -294,12 +295,9 @@ public class MainFragment extends BaseFragment {
         // Other
         mSDF = new SimpleDateFormat("yyyyMMdd_HHmmss");
 
-        //buildUserDialog();
+       // buildUserDialog();
 
-        String user = getResources().getString(R.string.notch_id);
-        mNotchService.setLicense(user);
-        updateUser(mNotchService.getLicense());
-        mUser = user;
+
 
 
         buildChannelDialog();
@@ -310,7 +308,21 @@ public class MainFragment extends BaseFragment {
         }
         mHandler.postDelayed(mSetDefaultUser, 1000L);
 
+
+
+
         return root;
+    }
+
+
+    @Override
+    public void onServiceConnected(NotchService notchService) {
+        super.onServiceConnected(notchService);
+
+        String user = getResources().getString(R.string.notch_id);
+        mNotchService.setLicense(user);
+        updateUser(mNotchService.getLicense());
+        mUser = user;
     }
 
     Runnable mSetDefaultUser = new Runnable() {
