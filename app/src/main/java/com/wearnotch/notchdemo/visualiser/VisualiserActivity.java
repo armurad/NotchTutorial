@@ -37,9 +37,13 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
 import java.io.BufferedWriter;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.Socket;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
@@ -131,6 +135,13 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
 
     DecimalFormat decimalFormat;
 
+    // TODO: Refer video 1: 5:41
+    // TODO: Create tools
+    Socket s;
+    DataOutputStream dos;
+    PrintWriter pw;
+
+
     @Override
     protected void onPostResume() {
         super.onPostResume();
@@ -159,6 +170,20 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
 
         DecimalFormatSymbols otherSymbols = new DecimalFormatSymbols(Locale.US);
         decimalFormat = new DecimalFormat("0.000", otherSymbols);
+
+        // TODO: Assign values to the socket
+        try {
+            // TODO: Connect to the server
+            s = new Socket("GERRYS IP AND PORT", 7800);
+            pw = new PrintWriter(s.getOutputStream());
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.e(TAG, "onCreate: Cant connect to the server!" );
+        }
+
+
     }
 
     @Subscribe
@@ -267,11 +292,30 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
                         }
                     }
 
+
+                    // This gets run in the secondary thread
+                    Skeleton toSendSkeleton = mData.getSkeleton();
+                    int i = 0;
+                    for (Bone b : mSkeleton.getBoneOrder()) {
+                        String name = b.getName();
+                        fvec3 information = b.getBoneVector();
+                        String messageToSend = name + "," + information.toString();
+                        Log.d(TAG, "doInBackground: " + messageToSend);
+
+                        if(s != null) {
+                            pw.write(messageToSend);
+                            pw.flush();
+                        }
+                    }
                     return renderer;
                 } catch (Exception e) {
                     Log.e(TAG, "NotchSkeletonRenderer exception", e);
                     return null;
                 }
+
+
+
+
             }
 
             @Override
