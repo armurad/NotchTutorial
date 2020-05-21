@@ -171,17 +171,7 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
         DecimalFormatSymbols otherSymbols = new DecimalFormatSymbols(Locale.US);
         decimalFormat = new DecimalFormat("0.000", otherSymbols);
 
-        // TODO: Assign values to the socket
-        try {
-            // TODO: Connect to the server
-            s = new Socket("GERRYS IP AND PORT", 7800);
-            pw = new PrintWriter(s.getOutputStream());
-
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            Log.e(TAG, "onCreate: Cant connect to the server!" );
-        }
+        new SetupSockets().execute();
 
 
     }
@@ -368,6 +358,31 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
             }
         }.execute();
     }
+
+
+
+    private class SetupSockets extends AsyncTask < Void, Void, Void> {
+
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+// TODO: Assign values to the socket
+            try {
+                // TODO: Connect to the server
+                s = new Socket("GERRYS IP AND PORT", 7800);
+                pw = new PrintWriter(s.getOutputStream());
+
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                Log.e(TAG, "onCreate: Cant connect to the server!" );
+            }
+
+            return null;
+        }
+    }
+
+
 
     @SuppressLint("StaticFieldLeak")
     public void setData(final Uri zipUri) {
