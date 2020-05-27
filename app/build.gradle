@@ -16,14 +16,17 @@ android {
 
     flavorDimensions 'default'
 
+
+
     defaultConfig {
         applicationId 'com.wearnotch.notchdemo.tutorial'
-        minSdkVersion 19
+        minSdkVersion 18
         targetSdkVersion 26
         versionCode 9
         versionName '1.8'
 
         multiDexEnabled true
+
     }
 
     compileOptions {
@@ -56,23 +59,23 @@ configurations {
     appConfig
 }
 dependencies {
-    compile 'com.notch.sdk:sdk-android:1.1.333'
     implementation 'com.notch.sdk:sdk-android:1.1.355'
     appConfig 'com.notch.sdk:sdk-android:1.1.355'
+    implementation 'com.android.support:support-v4:26.1.0'
+    implementation 'com.android.support:recyclerview-v7:26.1.0'
+    implementation 'com.android.support:appcompat-v7:26.1.0'
+    implementation 'com.android.support:cardview-v7:26.1.0'
+    implementation 'com.android.support:design:26.1.0'
+    implementation 'org.greenrobot:eventbus:3.0.0'
 
-    compile 'com.android.support:support-v4:26.1.0'
-    compile 'com.android.support:recyclerview-v7:26.1.0'
-    compile 'com.android.support:appcompat-v7:26.1.0'
-    compile 'com.android.support:cardview-v7:26.1.0'
-    compile 'com.android.support:design:26.1.0'
-    compile 'org.greenrobot:eventbus:3.0.0'
 
-    compile 'com.jakewharton:butterknife:8.8.1'
+    implementation 'com.jakewharton:butterknife:8.8.1'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
-    compile 'com.android.support:multidex:1.0.2'
-    compile 'com.afollestad.material-dialogs:core:0.9.0.1'
 
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'com.android.support:multidex:1.0.3'
+    implementation 'com.afollestad.material-dialogs:core:0.9.0.1'
+
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
 }
 
 task convertObj(type: JavaExec) {

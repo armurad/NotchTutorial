@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/NotchCode.iml" filepath="$PROJECT_DIR$/NotchCode.iml" group="NotchCode" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" group="NotchCode/app" />
+      <module fileurl="file://$PROJECT_DIR$/NotchTutorial.iml" filepath="$PROJECT_DIR$/NotchTutorial.iml" group="NotchTutorial" />
+      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" group="NotchTutorial/app" />
     </modules>
   </component>
 </project>

@@ -280,23 +280,24 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
                         if (dataIndex > 0) {
                             renderer.setAlpha(dataIndex, SECONDARY_TRANSPARENCY);
                         }
-                    }
+                        // This gets run in the secondary thread
+                        Skeleton toSendSkeleton = mData.getSkeleton();
+                        int i = 0;
+                        for (Bone b : mSkeleton.getBoneOrder()) {
+                            String name = b.getName();
+                            fvec3 information = b.getBoneVector();
+                            String messageToSend = name + "," + information.toString();
+                            Log.d(TAG, "doInBackground: " + messageToSend);
 
-
-                    // This gets run in the secondary thread
-                    Skeleton toSendSkeleton = mData.getSkeleton();
-                    int i = 0;
-                    for (Bone b : mSkeleton.getBoneOrder()) {
-                        String name = b.getName();
-                        fvec3 information = b.getBoneVector();
-                        String messageToSend = name + "," + information.toString();
-                        Log.d(TAG, "doInBackground: " + messageToSend);
-
-                        if(s != null) {
-                            pw.write(messageToSend);
-                            pw.flush();
+                            if(s != null) {
+                                pw.write(messageToSend);
+                                pw.flush();
+                            }
                         }
                     }
+
+
+
                     return renderer;
                 } catch (Exception e) {
                     Log.e(TAG, "NotchSkeletonRenderer exception", e);
@@ -369,7 +370,7 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
 // TODO: Assign values to the socket
             try {
                 // TODO: Connect to the server
-                s = new Socket("GERRYS IP AND PORT", 7800);
+                s = new Socket("172.19.119.245", 6800);
                 pw = new PrintWriter(s.getOutputStream());
 
 
