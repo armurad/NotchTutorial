@@ -50,6 +50,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGL11;
@@ -79,25 +81,25 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
 
     public static Intent createIntent(Context context, Uri zipUri) {
         Intent i = new Intent(context, VisualiserActivity.class);
-        i.putExtra(PARAM_INPUT_ZIP, new Parcelable[] { zipUri });
+        i.putExtra(PARAM_INPUT_ZIP, new Parcelable[]{zipUri});
         return i;
     }
 
     public static Intent createIntent(Context context, VisualiserData data, boolean realtime) {
         Intent i = new Intent(context, VisualiserActivity.class);
         i.putExtra(PARAM_INPUT_DATA, data);
-        i.putExtra(PARAM_REALTIME,realtime);
+        i.putExtra(PARAM_REALTIME, realtime);
         return i;
     }
 
     private Context mApplicationContext;
     private Parcelable[] mZipUri;
-    private VisualiserData mData;
-    private Skeleton mSkeleton;
+    private static VisualiserData mData;
+    private static Skeleton mSkeleton;
 
     private volatile boolean mPaused;
     private volatile int mFrameIndex;
-    private int mFrameCount;
+    private static int mFrameCount;
 
     private volatile float mSpeed = 1f;
     private volatile boolean mSeeking;
@@ -106,9 +108,12 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
     private String[] mBoneNames;
     private volatile boolean[] mCheckedBones;
     private boolean mRealTime, isGroundDrawn, mShowAngles;
-    private float mFrequency;
+    private static float mFrequency;
 
     private AlertDialog mBoneSelectorDialog;
+
+
+    private static boolean finishedSetup = false;
 
     @BindView(R.id.progress_animation)
     protected ProgressBar mProgress;
@@ -133,13 +138,13 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
     @BindView(R.id.elapsed_time_txt)
     protected TextView mElapsedTimeText;
 
-    DecimalFormat decimalFormat;
+    static DecimalFormat decimalFormat;
 
     // TODO: Refer video 1: 5:41
     // TODO: Create tools
-    Socket s;
+    static Socket s;
     DataOutputStream dos;
-    PrintWriter pw;
+    static PrintWriter pw;
 
 
     @Override
@@ -153,7 +158,10 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
         EventBus.getDefault().unregister(this);
         super.onPause();
     }
-
+    public static final int notify = 500;
+    private Timer mTimer = null;
+    
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -163,7 +171,7 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
 
         mZipUri = getIntent().getParcelableArrayExtra(PARAM_INPUT_ZIP);
         mData = (VisualiserData) getIntent().getSerializableExtra(PARAM_INPUT_DATA);
-        mRealTime = getIntent().getBooleanExtra(PARAM_REALTIME,false);
+        mRealTime = getIntent().getBooleanExtra(PARAM_REALTIME, false);
         mSeekBar.setOnSeekBarChangeListener(this);
         initRenderer();
         mShowAngles = true;
@@ -172,6 +180,25 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
         decimalFormat = new DecimalFormat("0.000", otherSymbols);
 
         new SetupSockets().execute();
+        if(mTimer != null)
+            mTimer.cancel();
+        else
+            mTimer = new Timer();
+
+        mTimer.scheduleAtFixedRate(new TimerTask()
+        {
+            @Override
+            public void run() {
+
+                if(finishedSetup) {
+                    exportAngles();
+                    Log.d(TAG, "run: Check timer");
+                } else {
+                    Log.d(TAG, "run: waiting...");
+                }
+
+            }
+        }, 0, notify);
 
 
     }
@@ -279,23 +306,25 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
                         int dataIndex = renderer.addRendererContext(renderer.createRendererContext(mData));
                         if (dataIndex > 0) {
                             renderer.setAlpha(dataIndex, SECONDARY_TRANSPARENCY);
-                        }
-                        // This gets run in the secondary thread
-                        Skeleton toSendSkeleton = mData.getSkeleton();
-                        int i = 0;
-                        for (Bone b : mSkeleton.getBoneOrder()) {
-                            String name = b.getName();
-                            fvec3 information = b.getBoneVector();
-                            String messageToSend = name + "," + information.toString();
-                            Log.d(TAG, "doInBackground: " + messageToSend);
 
-                            if(s != null) {
-                                pw.write(messageToSend);
-                                pw.flush();
-                            }
+//                            // This gets run in the secondary thread
+//                            Skeleton toSendSkeleton = mData.getSkeleton();
+//                            int i = 0;
+//                            for (Bone b : mSkeleton.getBoneOrder()) {
+//                                String name = b.getName();
+//                                fvec3 information = b.getBoneVector();
+//                                String messageToSend = name + "," + information.toString();
+//                                Log.d(TAG, "doInBackground: " + messageToSend);
+//
+//                                if(s != null) {
+//                                    pw.write(messageToSend);
+//                                    pw.flush();
+//                                }
+//                            }
+
                         }
+
                     }
-
 
 
                     return renderer;
@@ -303,8 +332,6 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
                     Log.e(TAG, "NotchSkeletonRenderer exception", e);
                     return null;
                 }
-
-
 
 
             }
@@ -322,7 +349,7 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
                     mRenderer.setHighlightBones(mHighlightBones);
                     mRenderer.setRootMovement(!mPinToCentre);
 
-                    if (mData == null){
+                    if (mData == null) {
                         mData = renderer.getRendererContext(0).getData();
                     }
                     mFrameCount = mData.getFrameCount();
@@ -361,8 +388,7 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
     }
 
 
-
-    private class SetupSockets extends AsyncTask < Void, Void, Void> {
+    private class SetupSockets extends AsyncTask<Void, Void, Void> {
 
 
         @Override
@@ -370,19 +396,21 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
 // TODO: Assign values to the socket
             try {
                 // TODO: Connect to the server
-                s = new Socket("172.19.119.245", 6800);
+                s = new Socket("172.19.118.47", 6000);
                 pw = new PrintWriter(s.getOutputStream());
+                pw.write("Test connection");
+                pw.flush();
+                finishedSetup = true;
 
 
             } catch (IOException e) {
                 e.printStackTrace();
-                Log.e(TAG, "onCreate: Cant connect to the server!" );
+                Log.e(TAG, "onCreate: Cant connect to the server!");
             }
 
             return null;
         }
     }
-
 
 
     @SuppressLint("StaticFieldLeak")
@@ -441,8 +469,9 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
         @Override
         public void run() {
             if (mRenderer != null) {
-                for (int i=0; i<mRenderer.getContextSize();i++) {
-                    if (mRenderer.rendererContextIndexExists(i)) mRenderer.setFrameIndex(i,mFrameIndex);
+                for (int i = 0; i < mRenderer.getContextSize(); i++) {
+                    if (mRenderer.rendererContextIndexExists(i))
+                        mRenderer.setFrameIndex(i, mFrameIndex);
                 }
 
                 if (!mSeeking) {
@@ -534,10 +563,9 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
                 mSpeed = 0.25f;
             }
             if (mSpeed >= 1f) {
-                mSpeedText.setText((int)mSpeed + "x");
-            }
-            else {
-                mSpeedText.setText("1/" + (int)(1f/mSpeed) + "x");
+                mSpeedText.setText((int) mSpeed + "x");
+            } else {
+                mSpeedText.setText("1/" + (int) (1f / mSpeed) + "x");
             }
             mRenderer.setAllPlaybackSpeed(mSpeed);
         }
@@ -547,7 +575,7 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
     @OnClick(R.id.button_front_view)
     void onFrontViewClicked() {
         if (mRenderer != null) {
-            mRenderer.setCameraBeta((float) Math.PI/2.0f);
+            mRenderer.setCameraBeta((float) Math.PI / 2.0f);
             mRenderer.setCameraAlpha((float) Math.PI / 2.0f);
         }
         refreshUI();
@@ -557,7 +585,7 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
     void onTopViewClicked() {
         if (mRenderer != null) {
             mRenderer.setCameraBeta(0.0f);
-            mRenderer.setCameraAlpha((float) Math.PI/2.0f);
+            mRenderer.setCameraAlpha((float) Math.PI / 2.0f);
         }
         refreshUI();
     }
@@ -565,7 +593,7 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
     @OnClick(R.id.button_side_view)
     void onSideViewClicked() {
         if (mRenderer != null) {
-            mRenderer.setCameraBeta((float) Math.PI/2.0f);
+            mRenderer.setCameraBeta((float) Math.PI / 2.0f);
             mRenderer.setCameraAlpha((float) Math.PI);
         }
         refreshUI();
@@ -586,7 +614,7 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
 
     // Show angles
     public void refreshAngles() {
-        if(mData == null) {
+        if (mData == null) {
             return;
         }
         this.runOnUiThread(new Runnable() {
@@ -623,16 +651,16 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
         StringBuilder sb = new StringBuilder();
         sb.append("Elbow angles:\n")
                 // Extension/flexion is rotation around the upperarm's X-axis
-                .append("Extension(+)/flexion(-): ").append((int)elbowAngles.get(0)).append("°\n")
+                .append("Extension(+)/flexion(-): ").append((int) elbowAngles.get(0)).append("°\n")
                 // Supination/pronation is rotation around the upperarm's Y-axis
-                .append("Supination(+)/pronation(-): ").append((int)elbowAngles.get(1)).append("°\n")
+                .append("Supination(+)/pronation(-): ").append((int) elbowAngles.get(1)).append("°\n")
                 .append("\nChest angles:\n")
                 // Anterior/posterior tilt (forward/backward bend) is rotation around global X axis
-                .append("Anterior(+)/posterior(-) tilt: ").append((int)chestAngles.get(0)).append("°\n")
+                .append("Anterior(+)/posterior(-) tilt: ").append((int) chestAngles.get(0)).append("°\n")
                 // Rotation to left/right is rotation around the global Y axis
-                .append("Rotation left(+)/right(-): ").append((int)chestAngles.get(1)).append("°\n")
+                .append("Rotation left(+)/right(-): ").append((int) chestAngles.get(1)).append("°\n")
                 // Lateral tilt (side bend) is rotation around global Z axis
-                .append("Lateral tilt left(-)/right(+): ").append((int)chestAngles.get(2)).append("°\n");
+                .append("Lateral tilt left(-)/right(+): ").append((int) chestAngles.get(2)).append("°\n");
 
         mAnglesText.setText(sb.toString());
     }
@@ -768,10 +796,10 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 mBonesToShow.removeAll(mBonesToShow);
-                for (int i=0; i<mCheckedBones.length; i++) {
+                for (int i = 0; i < mCheckedBones.length; i++) {
                     Bone b = mSkeleton.getBone(mBoneNames[i]);
                     mBonesToShow.remove(b);
-                    mCheckedBones[i]= false;
+                    mCheckedBones[i] = false;
                     ((AlertDialog) dialog).getListView().setItemChecked(i, false);
                 }
             }
@@ -780,7 +808,7 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
         mBoneSelectorDialog = builder.create();
     }
 
-    private void exportAngles() {
+    private static void exportAngles() {
         File directory = new File(Environment.getExternalStoragePublicDirectory(NOTCH_DIR), "exported_angles");
         if (!directory.isDirectory()) directory.mkdirs();
         BufferedWriter writer = null;
@@ -805,14 +833,14 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
                 for (int frame = 0; frame < mFrameCount; frame++) {
                     // Header
                     if (frame == 0) {
-                        if (i==0) {
+                        if (i == 0) {
                             sb.append("Time [sec], Extension(+)/flexion(-), Supination(+)/pronation(-),\n");
                         } else {
                             sb.append("Time [sec], Anterior(+)/posterior(-) tilt, Rotation left(+)/right(-), Lateral tilt left(-)/right(+),\n");
                         }
                     }
                     // Angles
-                    if (i==0) {
+                    if (i == 0) {
                         mData.calculateRelativeAngle(foreArm, upperArm, frame, angles);
                         sb.append(String.valueOf(decimalFormat.format(frame / mFrequency))).append(",")
                                 .append(angles.get(0)).append(",")
@@ -835,13 +863,63 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
                 try {
                     if (writer != null) {
                         writer.close();
+//                        // This gets run in the secondary thread
+//                        Skeleton toSendSkeleton = mData.getSkeleton();
+//                        int j = 0;
+//                        for (Bone b : mSkeleton.getBoneOrder()) {
+//                            String name = b.getName();
+//                            fvec3 information = b.getBoneVector();
+//                            String messageToSend = name + "," + information.toString();
+//                            Log.d(TAG, "doInBackground: " + messageToSend);
+//
+//
+//                            if (s != null) {
+//                                pw.write(messageToSend);
+//                                pw.flush();
+//                            }
+//                        }
+                new TransferData ().execute();
                     }
                     Util.showNotification("Angles are exported to : '" + directory);
 
-                } catch (Exception ignored) {
+
+                } catch (Exception e) {
+                    Log.e(TAG, "exportAngles: " + e.toString());
                 }
             }
         }
     }
 
+
+    private static class TransferData extends AsyncTask<Void, Void, Void> {
+
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+// TODO: Upload values to the socket
+            try {
+                // TODO: Upload to the server
+                // This gets run in the secondary thread
+                Skeleton toSendSkeleton = mData.getSkeleton();
+                int j = 0;
+                for (Bone b : mSkeleton.getBoneOrder()) {
+                    String name = b.getName();
+                    fvec3 information = b.getBoneVector();
+                    String messageToSend = name + "," + information.toString();
+                    Log.d(TAG, "doInBackground: " + messageToSend);
+
+                    if (s != null) {
+                        pw.write(messageToSend);
+                        pw.flush();
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "transferData: " + e.toString());
+            }
+            return null;
+
+        }
+    }
 }
+
+
