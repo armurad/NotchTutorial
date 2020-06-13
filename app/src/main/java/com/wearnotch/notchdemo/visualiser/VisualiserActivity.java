@@ -158,7 +158,7 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
         EventBus.getDefault().unregister(this);
         super.onPause();
     }
-    public static final int notify = 500;
+    public static final int notify = 6000;
     private Timer mTimer = null;
     
     
@@ -395,8 +395,8 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
         protected Void doInBackground(Void... voids) {
 // TODO: Assign values to the socket
             try {
-                // TODO: Connect to the server
-                s = new Socket("172.19.118.47", 6000);
+                // TODO: Connect to the serverbv
+                s = new Socket("172.19.130.199", 6000);
                 pw = new PrintWriter(s.getOutputStream());
                 pw.write("Test connection");
                 pw.flush();
@@ -636,6 +636,7 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
         fvec3 chestAngles = new fvec3();
         fvec3 elbowAngles = new fvec3();
 
+
         // Calculate forearm angles with respect to upper arm (determine elbow joint angles).
         // Angles correspond to rotations around X,Y and Z axis of the paren bone's coordinate system, respectively.
         // The coordinate system is X-left, Y-up, Z-front aligned.
@@ -663,6 +664,8 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
                 .append("Lateral tilt left(-)/right(+): ").append((int) chestAngles.get(2)).append("°\n");
 
         mAnglesText.setText(sb.toString());
+
+        new TransferData(chestAngles, elbowAngles).execute();
     }
 
     public void showNotification(final int stringId) {
@@ -878,7 +881,6 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
 //                                pw.flush();
 //                            }
 //                        }
-                new TransferData ().execute();
                     }
                     Util.showNotification("Angles are exported to : '" + directory);
 
@@ -893,26 +895,59 @@ public class VisualiserActivity extends AppCompatActivity implements SeekBar.OnS
 
     private static class TransferData extends AsyncTask<Void, Void, Void> {
 
+        private fvec3 an1, an2;
+
+        public TransferData(fvec3 angle1, fvec3 angle2){
+            an1 = angle1;
+            an2 = angle2;
+//            an3 = angle3;
+        }
 
         @Override
         protected Void doInBackground(Void... voids) {
-// TODO: Upload values to the socket
             try {
                 // TODO: Upload to the server
                 // This gets run in the secondary thread
-                Skeleton toSendSkeleton = mData.getSkeleton();
-                int j = 0;
-                for (Bone b : mSkeleton.getBoneOrder()) {
-                    String name = b.getName();
-                    fvec3 information = b.getBoneVector();
-                    String messageToSend = name + "," + information.toString();
-                    Log.d(TAG, "doInBackground: " + messageToSend);
 
-                    if (s != null) {
-                        pw.write(messageToSend);
+
+
+                StringBuilder message1 = new StringBuilder();
+                message1.append("Chest,");
+                message1.append(an1.get(0));
+                message1.append(",");
+                message1.append(an1.get(1));
+                message1.append(",");
+                message1.append(an1.get(2));
+                message1.append("\r\n");
+
+                message1.append("Forearm,");
+//                message1.append(an2.toString());
+
+                message1.append(an2.get(0));
+                message1.append(",");
+                message1.append(an2.get(1));
+                message1.append(",");
+                message1.append("0");
+
+
+
+                message1.append("\r\n");
+
+//                message1.append("upperArm,");
+//                message1.append(an3.toString());
+//                message1.append(an3.get(0));
+//                message1.append(",");
+//                message1.append(an3.get(1));
+//                message1.append(",");
+//                message1.append(an3.get(2));
+//                message1.append("\r\n");
+
+
+                if (s != null) {
+                        pw.write(message1.toString());
                         pw.flush();
                     }
-                }
+
             } catch (Exception e) {
                 Log.e(TAG, "transferData: " + e.toString());
             }

@@ -45,6 +45,7 @@ import com.wearnotch.internal.util.IOUtil;
 import com.wearnotch.notchdemo.util.Util;
 import com.wearnotch.notchdemo.visualiser.VisualiserActivity;
 import com.wearnotch.notchdemo.visualiser.VisualizerSettings;
+import com.wearnotch.notchmaths.fvec3;
 import com.wearnotch.service.common.Cancellable;
 import com.wearnotch.service.common.NotchCallback;
 import com.wearnotch.service.common.NotchError;
@@ -498,6 +499,13 @@ public class MainFragment extends BaseFragment {
         Skeleton skeleton;
         try {
             skeleton = Skeleton.from(new InputStreamReader(mApplicationContext.getResources().openRawResource(R.raw.skeleton_male), "UTF-8"));
+//            Workout workout = Workout.from(
+//                    "Demo_config",
+//                    skeleton,
+//                    IOUtil.readAll(
+//                            new InputStreamReader(
+//                                    mApplicationContext.getResources().openRawResource(R.raw.config_1_chest))));
+
             Workout workout = Workout.from("Demo_config", skeleton, IOUtil.readAll(new InputStreamReader(mApplicationContext.getResources().openRawResource(R.raw.config_3_right_arm))));
             if (mRealTime) {
                 workout = workout.withRealTime(true);
@@ -579,6 +587,10 @@ public class MainFragment extends BaseFragment {
     void cptr() {
         mState = State.CAPTURE;
         mCountDown.start();
+
+
+
+        //Need to make changes here
     }
 
 
@@ -592,8 +604,15 @@ public class MainFragment extends BaseFragment {
                     if (progress.getState() == NotchProgress.State.REALTIME_UPDATE) {
                         mRealTimeData = (VisualiserData) progress.getObject();
                         updateRealTime();
+
+
                     }
                 }
+
+
+
+
+
 
                 @Override
                 public void onSuccess(Void nothing) {
@@ -620,6 +639,8 @@ public class MainFragment extends BaseFragment {
                         mCurrentMeasurement = measurement;
                         Util.showNotification("Capture finished");
                         clearText();
+
+//                        Log.d("timedCapture", "onProgress: " + mRealTimeData.getSkeleton().toJSON());
                     }
                 });
         }

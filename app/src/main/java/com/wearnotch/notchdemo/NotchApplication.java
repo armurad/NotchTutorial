@@ -12,6 +12,8 @@ public class NotchApplication extends Application {
 
     @Override
     public void onCreate() {
+        super.onCreate();
+//        super.onCreate();
         mInst = this;
     }
 }

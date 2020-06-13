@@ -1,8 +1,8 @@
 <component name="libraryTable">
   <library name="Gradle: com.notch.sdk:sdk-network-android:1.0.477@aar">
     <CLASSES>
-      <root url="jar://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/f9303ae0e9cc39b7f6c6cf583a00bb27/sdk-network-android-1.0.477/jars/classes.jar!/" />
-      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/f9303ae0e9cc39b7f6c6cf583a00bb27/sdk-network-android-1.0.477/res" />
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/23521b3b63824bc084336c0ff5f659d6/sdk-network-android-1.0.477/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/23521b3b63824bc084336c0ff5f659d6/sdk-network-android-1.0.477/res" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

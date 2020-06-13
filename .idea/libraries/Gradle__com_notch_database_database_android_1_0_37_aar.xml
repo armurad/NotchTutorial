@@ -1,8 +1,8 @@
 <component name="libraryTable">
   <library name="Gradle: com.notch.database:database-android:1.0.37@aar">
     <CLASSES>
-      <root url="jar://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/7ec9d00481888b6e834861e91edf4c20/database-android-1.0.37/jars/classes.jar!/" />
-      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/7ec9d00481888b6e834861e91edf4c20/database-android-1.0.37/res" />
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/248d7089a03f12bdad8b33de75cce22f/database-android-1.0.37/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/248d7089a03f12bdad8b33de75cce22f/database-android-1.0.37/res" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
